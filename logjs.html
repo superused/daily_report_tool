@@ -1,0 +1,69 @@
+<script>
+  var beforeEditText = null;
+  var editBlock = 
+
+  $(function() {
+    $('table.log tbody tr').each(function() {
+      $(this).find('td').each(function() {
+        $(this).html(nl2br(htmlspecialchars($(this).html())));
+      });
+    });
+    
+    $(document).on('click', function(event) {
+      if ($('table.table.log tbody td.edit')[0] && !$(event.target).closest('table.table.log tbody td.edit').length) {
+        deleteEditArea();
+      }
+    });
+    
+    // クリック時の処理
+    $(document).on('click', 'table.table.log tbody td', function() {
+      if (!$(this).hasClass('edit')) {
+        if ($('.edit-area')[0]) {
+          deleteEditArea();
+        }
+        createEditArea(this);
+      }
+    });
+    
+    function createEditArea(node) {
+      var html = $(node).html();
+      beforeEditText = br2nl(html);
+      editBlock = $(node).data('id');
+      var w = $(node).outerWidth();
+      var h = $(node).outerHeight();
+      $(node).html('<textarea class="edit-area">' + br2nl(html) + '</textarea>');
+      $(node).addClass('edit');
+      $('.edit-area').css({
+        width: w,
+        height: h
+      });
+      $(node).find('textarea.edit-area').focus();
+    }
+    function deleteEditArea() {
+      var text = $('.edit-area').val();
+      if (beforeEditText != text) {
+        writeSpreadSheet(text, editBlock);
+      }
+      $('.edit-area').parents('td').removeClass('edit');
+      $('.edit-area').parents('td').html(nl2br(text));
+      beforeEditText = null;
+      editBlock = null;
+    }
+    
+    function writeSpreadSheet(str, cell) {
+      var before = beforeEditText;
+      var type = $('h1').attr('id');
+      google.script.run.withSuccessHandler(function(result) {
+        if (!result) {
+          $('td[data-id=' + cell + ']').html(nl2br(before));
+          var col = cell.substr(0, 1);
+          var row = cell.substr(1);
+          var colName = $('th[data-id=' + col + ']').html();
+          var rowName = $('td[data-id=A' + row + ']').html();
+          alert('編集に失敗したので、' + rowName + 'の' + colName + 'の値を戻しました');
+        }
+      }).writeSpreadSheetLog(str, cell, type);
+    }
+  });
+</script>
+

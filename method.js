@@ -288,6 +288,26 @@ function writeKinmuSheet(startHour, startMinute, endHour, endMinute, breakTime, 
   }
 }
 
+/**
+ * 日報、週報シート編集分を書き込み
+ */
+function writeSpreadSheetLog(str, cell, type) {
+  try {
+    if (type == 'dailylog') {
+      var sheetName = 'daily_data';
+    } else if (type == 'weeklylog') {
+      var sheetName = 'weekly_data';
+    } else {
+      return false;
+    }
+    var sheetData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+    sheetData.getRange(cell).setValue(str);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 function getChangeDateText(d) {
   if (!d) {
     d = date;

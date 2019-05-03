@@ -157,5 +157,23 @@
     }
 
   });
+  
+  function htmlspecialchars(str){
+    return (str + '').replace(/&/g,'&amp;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;'); 
+  }
+
+  function nl2br(str) {
+    var res = str.replace(/\r\n/g, "<br />");
+    res = res.replace(/(\n|\r)/g, "<br />");
+    return res;
+  }
+  
+  function br2nl(str) {
+    return str.replace(/(<br>|<br \/>|<br\/>)/g, '\n');
+  };
 </script>
 
