@@ -1,0 +1,161 @@
+<script>
+  var sanbiFlg = false;
+  $(function() {
+    var pageType = $('.navbar-header h1').attr('id');
+    
+    if (pageType == 'daily') { 
+      $("#datepicker_1").datepicker({
+        onSelect: function(date) {
+          $('#ui-datepicker-div').hide();
+          google.script.run.withSuccessHandler(function(result) {
+            console.log(result);
+            $('.honbun').val(result.honbun);
+            $('.subject').val(result.subject);
+            $('.set-date .date').html(date.replace(/\//g, '-'));
+          }).getChangeDateText(date);
+        },
+        constrainInput: true,
+        showOn: 'button',
+        buttonText: '日付変更'
+      });
+      $('.ui-datepicker-trigger').addClass('btn-lg btn btn-default');
+    
+      var start = JSON.parse($('input[name="start"]').val());    
+      var end = JSON.parse($('input[name="end"]').val());
+      $('.start.hour').find('option[value="' + start[0] + '"]').prop('selected', true);
+    
+      $('.start.minute').find('option[value="' + start[1] + '"]').prop('selected', true);
+      $('.end.hour').find('option[value="' + end[0] + '"]').prop('selected', true);
+      $('.end.minute').find('option[value="' + end[1] + '"]').prop('selected', true);
+      $('.break-time').find('option[value="' + $('input[name="break-time"]').val() + '"]').prop('selected', true);
+    } else if (pageType == 'weekly') {
+      google.script.run.withSuccessHandler(function(result) {
+        $('textarea[data-title="work-time-weekly"]').val(result);
+      }).getWorkTimeWeekly();
+    }
+    
+    $(window).load(function() {
+      if ($(window).height() / $(window).width() < 1) {
+        $('body').css('font-size', '1.5em');
+        $('textarea').css('height', '50px');
+        $('textarea.honbun, textarea.kiroku, textarea.goal').css('height', '100px');
+        $('textarea.work-time-weekly').css('height', '170px');
+        $('.btn-group-lg>.btn, .btn-lg').css('padding', '2px 4px');
+      } else {
+        $('table.mail-contents tbody tr td').css('padding', '30px');
+      }
+    });
+    
+    $(document).on('click', '#copy', function() {
+      google.script.run.withSuccessHandler(function(result) {
+        //$('.to').val(result.to);
+        //$('.from').val(result.from);
+        //$('.cc').val(result.cc);
+        $('.start.hour').val(result.startHour);
+        $('.start.minute').val(result.startMinute);
+        $('.end.hour').val(result.endHour);
+        $('.end.minute').val(result.endMinute);
+        $('.break-time').val(result.breakTime);
+        if ($('.remarks')[0]) {
+          $('.remarks').val(result.remarks);
+        }
+        if ($('textarea[data-title="kiroku"]')[0]) {
+          $('textarea[data-title="kiroku"]').val(result.kiroku);
+        }
+        if ($('textarea[data-title="goal"]')[0]) {
+          $('textarea[data-title="goal"]').val(result.goal);
+        }
+        $('textarea[data-title="good"]').val(result.good);
+        $('textarea[data-title="bad"]').val(result.bad);
+        $('textarea[data-title="other"]').val(result.other);
+      }).getLastRowValues();
+    });
+    
+    $(document).on('click', '#send', function() {
+      var data = {
+        to: $('.to').val(),
+        from: $('.from').val(),
+        sender: $('.sender').val(),
+        subject: $('.subject').val(),
+        honbun: makeHonbun(),
+        cc: $('.cc').val(),
+        good: $('textarea[data-title="good"]').val(),
+        bad: $('textarea[data-title="bad"]').val(),
+        other: $('textarea[data-title="other"]').val(),
+        pageType: pageType,
+      };
+      if (data.honbun === false) {
+        alert('実施記録が未記入です。');
+        return false;
+      }
+      if (pageType == 'daily') {
+        data.workTime = getWorkTime();
+        data.breakTime = $('.break-time').val();
+        data.remarks = $('.remarks').val();
+        data.start = $('.start.hour').val() + ':' + ('0' + $('.start.minute').val()).slice(-2);
+        data.end = $('.end.hour').val() + ':' + ('0' + $('.end.minute').val()).slice(-2);
+        data.kiroku = $('textarea[data-title="kiroku"]').val();
+        data.date = $('#datepicker_1').val();
+      } else if (pageType == 'weekly') {
+        data.goal = $('textarea.goal').val();
+        data.workTimeWeekly = $('textarea[data-title="work-time-weekly"]').val();
+      }
+      if (confirm('メールを送信しますか？')) {
+        google.script.run.withSuccessHandler(function(result) {
+          alert('送信しました');
+        }).sendMail(data);
+      }
+    });
+     
+    $(document).on('click', '.clear', function() {
+      var title = $(this).data('title');
+      $('textarea[data-title="' + title + '"]').val('');
+    });
+    
+    $(document).on('click', '#normal', function() {
+      google.script.run.withSuccessHandler(function(result) {
+        $('.honbun').val(result);
+      }).getJobun();
+      google.script.run.withSuccessHandler(function(result) {
+        $('.subject').val(result);
+      }).getSubject();
+    });
+    
+    function makeHonbun() {
+      var body = $('.honbun').val() + "\n\n";
+      if (pageType == 'daily') {
+        var remarks = $('.remarks').val();
+        body += "＜稼働時間＞\n";
+        body += " 開始   終了  稼働時間 備考\n";
+        body += ('0' + $('.start.hour').val()).slice(-2) + ':' + ('0' + $('.start.minute').val()).slice(-2) + ' ' + ('0' + $('.end.hour').val()).slice(-2) + ':' + ('0' + $('.end.minute').val()).slice(-2);
+        body += " " + getWorkTime() + "　";
+        if (remarks != '') body += remarks;
+        body += "\n\n";
+      }
+      var flg = true;
+      $('.add-body').each(function() {
+        body += '＜' + $(this).find('span').text() + "＞\n";
+        var text = $('textarea[data-title="' + $(this).data('title') + '"]').val();
+        if ($(this).find('span').text() == '実施記録' && text == '') flg = false;
+        if (text == '') text = '特になし';
+        body += text + "\n\n";
+      });
+      if (pageType == 'weekly') {
+        body += "\n＜稼働時間＞\n";
+        body += "日付　    開始   終了  稼働時間 備考\n";
+        body += $('textarea[data-title="work-time-weekly"]').val() + "\n\n";
+      }
+      if (!flg) return flg;
+      return body;
+    }
+    
+    function getWorkTime() {
+      var workTime = (parseInt($('.end.hour').val()) * 60 + parseInt($('.end.minute').val())) -
+      (parseInt($('.start.hour').val()) * 60 + parseInt($('.start.minute').val())) -
+      parseInt($('.break-time').val());
+      return ('0' + parseInt(workTime / 60)).slice(-2) + ':' + ('0' + (workTime % 60)).slice(-2);
+    }
+
+  });
+</script>
+

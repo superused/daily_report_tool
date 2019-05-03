@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>ナンバーワンカルチャー</title>
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/redmond/jquery-ui.css" >
+  <?!= HtmlService.createHtmlOutputFromFile('css').getContent(); ?>
+</head>
+<body>
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <h1 id="culture">
+          <span>カルチャー</span>
+          <button class="btn btn-default location" onclick="window.top.location.href='<?= url ?>'">日報</button>
+        </h1>
+      </div>
+    </div>
+  </nav>
+
+  <div class="mainpanel culture">
+    <h3>株式会社ナンバーワンソリューションズ 経営理念</h3>
+    <h2>「人を活かす」</h2>
+    <div style="height: 80px">&nbsp;</div>
+    <p>ナンバーワンカルチャー</p>
+
+    <table class="culture table">
+      <tr><th>プリンシプル</th></tr>
+      <tr><td>自ら考え自ら動く</td></tr>
+      <tr><td>目的・目標を明確にする</td></tr>
+      <tr><td>優先順位をつける</td></tr>
+    </table>
+
+    <table class="culture table">
+      <tr><th>スキル</th></tr>
+      <tr><td>心身を良い状態に保つ</td></tr>
+      <tr><td>勉強好きになる</td></tr>
+      <tr><td>キャリアを築く</td></tr>
+    </table>
+
+    <table class="culture table">
+      <tr><th>コミュニケーション</th></tr>
+      <tr><td>信頼関係を築く</td></tr>
+      <tr><td>相手の立場で理解する</td></tr>
+      <tr><td>伝わる力を高める</td></tr>
+    </table>
+
+    <table class="culture table">
+      <tr><th>リーダーシップ</th></tr>
+      <tr><td>方向性を示す</td></tr>
+      <tr><td>他者を支援する</td></tr>
+      <tr><td>人間力を高める</td></tr>
+    </table>
+  </div>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+  <?!= HtmlService.createHtmlOutputFromFile('js').getContent(); ?>
+</body>
