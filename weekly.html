@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>日報・週報作成ツール</title>
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+  <?!= HtmlService.createHtmlOutputFromFile('css').getContent(); ?>
+</head>
+<body>
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <h1 id="weekly">
+          <span>週報メール送信</span>
+          <button class="btn btn-default history" onclick="window.top.location.href='<?= url ?>?t=weeklylog'">履歴</button>
+          <button class="btn btn-default location" onclick="window.top.location.href='<?= url ?>'">日報</button>
+        </h1>
+      </div>
+    </div>
+  </nav>
+
+  <div class="mainpanel">
+    <!--<button class="btn btn-default btn-lg" id="copy">前週のコピー</button><br />-->
+    <table class="table table-striped mail-contents">
+      <thead>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <textarea class="honbun"><?= honbun ?></textarea>
+          </td>
+        </tr>
+        <tr>
+          <td class="add-body" data-title="goal"><span>目標</span><button class="btn btn-default btn-lg clear" data-title="goal">clear</button><td>
+        </tr>             
+        <tr>
+          <td><textarea class="goal" data-title="goal" placeholder="スキル目標、カルチャー目標"></textarea></td>
+        </tr>        
+        <tr>
+          <td class="add-body" data-title="good"><span>うまくいったこと</span><button class="btn btn-default btn-lg clear" data-title="good">clear</button><td>
+        </tr>             
+        <tr>
+          <td><textarea class="good" data-title="good" placeholder="目標達成のために取り組み、うまくいったこと、褒められたこと、自分へのエール"></textarea></td>
+        </tr>        
+        <tr>
+          <td class="add-body" data-title="bad"><span>改善したいこと</span><button class="btn btn-default btn-lg clear" data-title="bad">clear</button></td>
+        </tr>             
+        <tr>
+          <td><textarea class="bad" data-title="bad" placeholder="さらに良くするために、取り組みたいこと"></textarea></td>
+        </tr>   
+        <tr>
+          <td class="add-body" data-title="other"><span>その他</span><button class="btn btn-default btn-lg clear" data-title="other">clear</button></td>
+        </tr>   
+        <tr>
+          <td><textarea class="other" data-title="other" placeholder="工夫、アイディア、やるべきと思ったこと、教訓、感謝、所感等"></textarea></td>
+        </tr>             
+        <tr>
+          <td>稼働時間</td>
+        </tr>
+        <tr>
+          <td data-title="work-time-weekly">
+            <textarea class="work-time-weekly" data-title="work-time-weekly"></textarea>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table class="table table-striped">
+      <thead>
+      </thead>
+      <tbody>
+        <tr>
+          <td><button class="send btn-lg" id="send">メール送信</button><br /></td>
+        </tr>
+      </tbody>
+    </table>
+    <table class="table table-striped mail-text">
+      <thead>
+      </thead>
+      <tbody>
+        <tr>
+          <td>title:</td>
+          <td><input type="text" class="subject" value="<?= subject ?>"></td>
+        </tr>
+        <tr>
+          <td>from:</td>
+          <td><input type="text" class="from" value="<?= from ?>"></td>
+        </tr>
+        <tr>
+          <td>&nbsp;to&nbsp;:</td>
+          <td><input type="text" class="to" value="<?= to ?>"></td>
+        </tr>
+        <tr>
+          <td>Cc:</td>
+          <td><input type="text" class="cc" value="<?= cc ?>"></td>
+        </tr>
+        <tr>
+          <td>差出人:</td>
+          <td><input type="text" class="sender" value="<?= sender ?>"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="width: 120px;">&nbsp;</div>
+    <table class="table">
+      <tr>
+        <td>週報記入の目的</td>
+      </tr>
+      <tr>
+        <td><span>
+        一週間を振り返るツールとして活用します。<br>
+        各自が年次や月次、週次の目標に対して具体的に行動できているのか、一週間を振り返りながら自ら確認するために記入します。<br>
+        目標に対してチャレンジできているのか、できていないとするならば障壁が何であるのか？を明らかにし、<br>
+        それを取り除いていけるようリーダーにも支援してもらいながら、理想の姿へ近づいていきます。
+        </span></td>
+      </tr>
+    </table>
+    <div style="width: 80px;">&nbsp;</div>
+    <table class="table">
+      <tr><td><a class="bottom-link" onclick="window.top.location.href='<?= url ?>?t=culture'">カルチャー</a></td>
+      <tr><td><a class="bottom-link" onclick="window.top.location.href='<?= url ?>?t=config'">設定</a></td>
+    </table>
+  </div>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+  <?!= HtmlService.createHtmlOutputFromFile('js').getContent(); ?>
+</body>

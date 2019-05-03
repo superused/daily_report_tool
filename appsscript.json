@@ -1,0 +1,16 @@
+{
+  "timeZone": "Asia/Tokyo",
+  "dependencies": {
+    "libraries": [{
+      "userSymbol": "dailyreporttool",
+      "libraryId": "1Futn_NykHVYQzouMbnEcCen5ptR8-PJMOv3Ovw9OrAfgl-2Zwoxz1ZEB",
+      "version": "187",
+      "developmentMode": true
+    }]
+  },
+  "webapp": {
+    "access": "ANYONE_ANONYMOUS",
+    "executeAs": "USER_DEPLOYING"
+  },
+  "exceptionLogging": "STACKDRIVER"
+}

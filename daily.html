@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>日報・週報作成ツール</title>
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/redmond/jquery-ui.css" >
+  <?!= HtmlService.createHtmlOutputFromFile('css').getContent(); ?>
+</head>
+<body>
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <h1 id="daily">
+          <span>日報メール送信</span>
+          <button class="btn btn-default history" onclick="window.top.location.href='<?= url ?>?t=dailylog'">履歴</button>
+          <button class="btn btn-default location" onclick="window.top.location.href='<?= url ?>?t=weekly'">週報</button>
+        </h1>
+      </div>
+    </div>
+  </nav>
+
+  <div class="mainpanel">
+    <div class="set-date">
+      <span class="date"><?= date ?></span>の日報を作成&nbsp;&nbsp;&nbsp;&nbsp;
+      <input type="hidden" id="datepicker_1" value="<?= date.replace(/\-/g, '/') ?>">
+    </div>
+    <button class="btn btn-default btn-lg" id="copy">前日のコピー</button><br />
+    <table class="table table-striped mail-contents">
+      <thead>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <textarea class="honbun"><?= honbun ?></textarea>
+          </td>
+        </tr>   
+        <tr>
+          <td>稼働時間</td>
+        </tr>
+        <tr>
+          <td class="work-time">
+            <select class="btn btn-lg btn-default start hour dropdown">
+<? for (var i = 0; i < 24; i++){ ?>
+<? var p = (i < 10) ? ('0' + i) : i; ?>
+              <option value="<?= i ?>"><?= p ?></option>
+<? } ?>
+            </select>:
+            <select class="btn btn-lg btn-default start minute dropdown">
+              <option value="0">00</option>
+              <option value="15">15</option>
+              <option value="30">30</option>
+              <option value="45">45</option>
+            </select>
+            <input type="hidden" name="start" value="<?= JSON.stringify(start); ?>">
+            <span>&nbsp;～&nbsp;</span>
+            <select class="btn btn-lg btn-default end hour dropdown">
+<? for (var i = 0; i < 30; i++) { ?>
+<? var p = (i < 10) ? ('0' + i) : i; ?>
+              <option value="<?= i ?>"><?= p ?></option>
+<? } ?>
+            </select>:
+            <select class="btn btn-lg btn-default end minute dropdown">
+              <option value="0">00</option>
+              <option value="15">15</option>
+              <option value="30">30</option>
+              <option value="45">45</option>
+            </select>
+            <input type="hidden" name="end" value="<?= JSON.stringify(end); ?>">
+          </td>
+        </tr>      
+        <tr>
+          <td>
+            <span>休憩時間</span>
+            <select class="btn btn-lg btn-default break-time dropdown">
+<? for (var i = 0; i <= 40; i++) { ?>
+<? var t = i * 15; ?>
+              <option value="<?= t ?>"><?= t ?></option>
+<? } ?>
+            </select>
+            <span>分</span>
+            <input type="hidden" name="break-time" value="<?= breakTime; ?>">
+          <td>
+        </tr>
+        <tr>
+          <td>
+            <span>備考</span>
+            <input class="remarks" placeholder="勤怠について特記事項があれば記入">
+          </td>
+        </tr>             
+        <tr>
+          <td class="add-body" data-title="kiroku"><span>実施記録</span><button class="btn btn-default btn-lg clear" data-title="kiroku">clear</button><td>
+        </tr>             
+        <tr>
+          <td><textarea class="kiroku" data-title="kiroku" placeholder="目標に対する今日一日の取り組みを記載"></textarea></td>
+        </tr>        
+        <tr>
+          <td class="add-body" data-title="good"><span>うまくいったこと</span><button class="btn btn-default btn-lg clear" data-title="good">clear</button><td>
+        </tr>             
+        <tr>
+          <td><textarea class="good" data-title="good" placeholder="目標達成のために取り組み、うまくいったこと、褒められたこと、自分へのエール"></textarea></td>
+        </tr>        
+        <tr>
+          <td class="add-body" data-title="bad"><span>改善したいこと</span><button class="btn btn-default btn-lg clear" data-title="bad">clear</button></td>
+        </tr>             
+        <tr>
+          <td><textarea class="bad" data-title="bad" placeholder="さらに良くするために、取り組みたいこと"></textarea></td>
+        </tr>   
+        <tr>
+          <td class="add-body" data-title="other"><span>その他</span><button class="btn btn-default btn-lg clear" data-title="other">clear</button></td>
+        </tr>   
+        <tr>
+          <td><textarea class="other" data-title="other" placeholder="工夫、アイディア、やるべきと思ったこと、教訓、感謝、所感等"></textarea></td>
+        </tr>
+      </tbody>
+    </table>
+    <table class="table table-striped">
+      <thead>
+      </thead>
+      <tbody>
+        <tr>
+          <td><button class="send btn-lg" id="send">メール送信</button><br /></td>
+        </tr>
+      </tbody>
+    </table>
+    <table class="table table-striped mail-text">
+      <thead>
+      </thead>
+      <tbody>
+        <tr>
+          <td>title:</td>
+          <td><input type="text" class="subject" value="<?= subject ?>"></td>
+        </tr>
+        <tr>
+          <td>from:</td>
+          <td><input type="text" class="from" value="<?= from ?>"></td>
+        </tr>
+        <tr>
+          <td>&nbsp;to&nbsp;:</td>
+          <td><input type="text" class="to" value="<?= to ?>"></td>
+        </tr>
+        <tr>
+          <td>Cc:</td>
+          <td><input type="text" class="cc" value="<?= cc ?>"></td>
+        </tr>
+        <tr>
+          <td>差出人:</td>
+          <td><input type="text" class="sender" value="<?= sender ?>"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="width: 120px;">&nbsp;</div>
+    <table class="table">
+      <tr>
+        <td>日報記入の目的</td>
+      </tr>
+      <tr>
+        <td><span>
+        実行記録として活用します。週報による振り返りのベースとなります。<br>
+        目標に対してチャレンジできているのか、できていないとするならば障壁が何であるのか？を明らかにし、<br>
+        それを取り除いていけるようリーダーにも支援してもらいながら、理想の姿へ近づいていきます。
+        </span></td>
+      </tr>
+    </table>
+    <div style="width: 80px;">&nbsp;</div>
+    <table class="table">
+      <tr><td><a class="bottom-link" onclick="window.top.location.href='<?= url ?>?t=culture'">カルチャー</a></td>
+      <tr><td><a class="bottom-link" onclick="window.top.location.href='<?= url ?>?t=config'">設定</a></td>
+    </table>
+  </div>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1/i18n/jquery.ui.datepicker-ja.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+  <?!= HtmlService.createHtmlOutputFromFile('js').getContent(); ?>
+</body>
