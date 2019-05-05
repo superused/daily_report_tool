@@ -10,7 +10,7 @@ var name1 = sheet.getRange("A2").getValue();
 var name2 = sheet.getRange("B2").getValue();
 var jobun = sheet.getRange("F2").getValue()
     .replace(/%name%/g, name1)
-    .replace(/%date%/g, getDate())
+    .replace(/%date%/g, getDateStr())
     .replace(/%type%/g, mailType);
 var startTime = sheet.getRange("G2").getValue();
 var start = [startTime.getHours(), startTime.getMinutes()];
@@ -19,10 +19,16 @@ var end = [endTime.getHours(), endTime.getMinutes()];
 
 var breakTime = sheet.getRange("I2").getValue();
 var signature = sheet.getRange("J2").getValue();
+var workSheet = sheet.getRange("K2").getValue();
 
 var sender = name1 + name2; //差出人
 
 var kinmuUrl = sheet.getRange("K2").getValue();
+
+var dailyData = null;
+var weeklyData = null;
+
+var dataNum = 20;
 
 /**
  * 表示処理
@@ -47,11 +53,14 @@ function doGet(request) {
   } else if (request.parameters.t == 'dailylog') {
     var output = HtmlService.createTemplateFromFile("dailylog.html");
     output.datas = getDailyDatas();
+    output.lastRow = dailyData.getLastRow();
   } else if (request.parameters.t == 'weeklylog') {
     var output = HtmlService.createTemplateFromFile("weeklylog.html");
     output.datas = getWeeklyDatas();
+    output.lastRow = weeklyData.getLastRow();
   } else if (request.parameters.t == 'config') {
     var output = HtmlService.createTemplateFromFile("config.html");
+    output.workSheet = workSheet;
     output.signature = signature;
     output.name1 = name1;
     output.name2 = name2;
@@ -65,13 +74,27 @@ function doGet(request) {
   return output.evaluate();
 }
 
-function getWeeklyDatas() {
-  var weeklyData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('weekly_data');
-  var datas = weeklyData.getRange('A2:I' + weeklyData.getLastRow()).getValues();
+function getLogDatas(type, lastRow) {
+  if (type == 'daily') {
+    return getDailyDatas(lastRow);
+  } else if (type == 'weekly') {
+    return getWeeklyDatas(lastRow);
+  }
+  return false;
+}
+
+function getWeeklyDatas(lastRow) {
+  getSheetData('weekly');
+  if (!lastRow) lastRow = weeklyData.getLastRow();
+  var startRow = lastRow - dataNum + 1 > 2 ? lastRow - dataNum + 1 : 2;
+  if (startRow > lastRow) return [[]];
+  var datas = weeklyData.getRange('A' + startRow + ':I' + lastRow).getValues();
+
   for (var i in datas) {
+    if (!datas[i][0]) continue;
     for (var j in datas[i]) {
       if (j == 0) {
-        datas[i][j] = getDate(datas[i][j]);
+        datas[i][j] = getDateStr(datas[i][j]);
       }
       datas[i][j] = htmlspecialchars(datas[i][j]);
     }
@@ -80,13 +103,18 @@ function getWeeklyDatas() {
   return datas;
 }
 
-function getDailyDatas() {
-  var dailyData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('daily_data');
-  var datas = dailyData.getRange('A2:L' + dailyData.getLastRow()).getValues();
+function getDailyDatas(lastRow) {
+  getSheetData('daily');
+  if (!lastRow) lastRow = dailyData.getLastRow();
+  var startRow = lastRow - dataNum + 1 > 2 ? lastRow - dataNum + 1 : 2;
+  if (startRow > lastRow) return [[]];
+  var datas = dailyData.getRange('A' + startRow + ':L' + lastRow).getValues();
+
   for (var i in datas) {
+    if (!datas[i][0]) continue;
     for (var j in datas[i]) {
       if (j == 0) {
-        datas[i][j] = getDate(datas[i][j]);
+        datas[i][j] = getDateStr(datas[i][j]);
       } else if (['4','5','6'].indexOf(j) >= 0) {
         datas[i][j] = getFullTime(datas[i][j]);
       }
@@ -112,8 +140,8 @@ function makeOutput(output) {
 }
 
 function saveConfig(data) {
-  var values = [[data.name1, data.name2, data.from, data.to, data.cc, data.jobun, data.start, data.end, data.breakTime, data.signature]];
-  sheet.getRange("A2:J2").setValues(values);
+  var values = [[data.name1, data.name2, data.from, data.to, data.cc, data.jobun, data.start, data.end, data.breakTime, data.signature, data.workSheet]];
+  sheet.getRange("A2:K2").setValues(values);
 }
 
 function sendMail(data) {
@@ -132,8 +160,9 @@ function sendMail(data) {
 /**
  * 日付の値を取得(MM/DD形式)
  */
-function getDate(d) {
+function getDateStr(d) {
   if (!d) d = date;
+  if (typeof(d.getMonth) != 'function') return null;
   return (d.getMonth() + 1) + '/' + d.getDate();
 }
 
@@ -142,11 +171,13 @@ function getDate(d) {
  */
 function getFullDate(d) {
   if (!d) d = date;
+  if (typeof(d.getFullYear) != 'function') return null;
   return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
 }
 
 function getSubjectDate(d) {
   if (!d) d = date;
+  if (typeof(d.getFullYear) != 'function') return null;
   return (d.getFullYear() + '-' +
     ('0' + (d.getMonth() + 1)).slice(-2) + '-' +
     ('0' + d.getDate()).slice(-2));
@@ -154,6 +185,7 @@ function getSubjectDate(d) {
 
 function getFullTime(d) {
   if (!d) d = date;
+  if (typeof(d.getHours) != 'function') return null;
   return ('0' + (d.getHours())).slice(-2) + ':' + ('0' + (d.getMinutes())).slice(-2);
 }
 
@@ -175,7 +207,7 @@ function getSubject(d) {
  */
 function appendEventLog(data) {
   // シート取得
-  var sheetData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName((data.pageType == 'weekly') ? 'weekly_data' : 'daily_data');
+  var sheetData = getSheetData(data.pageType);
   // データ入力
   if (data.pageType == 'weekly') {
     sheetData.appendRow([getFullDate(), data.from, data.to, data.cc, data.goal, data.good, data.bad, data.other, data.workTimeWeekly]);
@@ -189,7 +221,7 @@ function appendEventLog(data) {
 }
 
 function getLastRowValues() {
-  var dailyData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('daily_data');
+  getSheetData('daily');
   var last = dailyData.getLastRow();
   var workTime       = dailyData.getRange(last, 7).getValue();
   workTime = workTime.getHours() * 60 + workTime.getMinutes();
@@ -231,7 +263,7 @@ function getWorkTimeWeekly() {
     };
     dt.setDate(dt.getDate() + 1);
   }
-  var dailyData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('daily_data');
+  getSheetData('daily');
   var last = dailyData.getLastRow();
   var start = last - 10;
   if (start < 2) start = 2;
@@ -292,20 +324,31 @@ function writeKinmuSheet(startHour, startMinute, endHour, endMinute, breakTime, 
  * 日報、週報シート編集分を書き込み
  */
 function writeSpreadSheetLog(str, cell, type) {
+  var sheetData = null;
   try {
     if (type == 'dailylog') {
-      var sheetName = 'daily_data';
+      sheetData = getSheetData('daily');
     } else if (type == 'weeklylog') {
-      var sheetName = 'weekly_data';
+      sheetData = getSheetData('weekly');
     } else {
       return false;
     }
-    var sheetData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
     sheetData.getRange(cell).setValue(str);
     return true;
   } catch (e) {
     return false;
   }
+}
+
+function getSheetData(type) {
+  if (type == 'daily') {
+    if (!dailyData) dailyData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('daily_data');
+    return dailyData;
+  } else if (type == 'weekly') {
+    if (!weeklyData) weeklyData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('weekly_data');
+    return weeklyData;
+  }
+  return false;
 }
 
 function getChangeDateText(d) {
@@ -317,9 +360,9 @@ function getChangeDateText(d) {
   }
   var jobun2 = sheet.getRange("F2").getValue()
     .replace(/%name%/g, name1)
-    .replace(/%date%/g, getDate(d))
+    .replace(/%date%/g, getDateStr(d))
     .replace(/%type%/g, mailType);
-  
+
   return {
     honbun: jobun2,
     subject: getSubject(d)

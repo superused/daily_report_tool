@@ -1,34 +1,110 @@
 <script>
   var beforeEditText = null;
-  var editBlock = 
+  var editBlock = null;
+  var beforeEditTextBlock = {};
 
   $(function() {
+    // 履歴の各項目の改行をhtml用に書き換える
     $('table.log tbody tr').each(function() {
       $(this).find('td').each(function() {
         $(this).html(nl2br(htmlspecialchars($(this).html())));
       });
     });
-    
+
+    // 履歴の各項目をクリックすると編集画面が表示される
+    $(document).on('click', 'table.table.log tbody td', function() {
+      if (!$(this).hasClass('edit')) {
+        if ($('.edit-area')[0]) deleteEditArea();
+        createEditArea(this);
+      }
+    });
+
+    // 履歴の各項目以外をクリックすると編集画面が消える
     $(document).on('click', function(event) {
       if ($('table.table.log tbody td.edit')[0] && !$(event.target).closest('table.table.log tbody td.edit').length) {
         deleteEditArea();
       }
     });
-    
-    // クリック時の処理
-    $(document).on('click', 'table.table.log tbody td', function() {
-      if (!$(this).hasClass('edit')) {
-        if ($('.edit-area')[0]) {
-          deleteEditArea();
-        }
-        createEditArea(this);
+
+    // 保存ボタンをクリックすると変更を保存する
+    $(document).on('click', '.save-change', function() {
+      if ($('.edit-area')[0]) deleteEditArea();
+      if (!$('table.log td.updated')[0]) {
+        alert('保存する変更はありません');
+        return;
+      }
+      if (confirm('変更を保存しますか？')) {
+        var count = $('table.log td.updated').length;
+        $('table.log td.updated').each(function() {
+          writeSpreadSheet(br2nl($(this).html()), $(this).data('id'));
+          beforeEditTextBlock[$(this).data('id')] = null;
+          $(this).removeClass('updated');
+          count--;
+          if (count == 0) {
+            setTimeout(function() {
+              alert('変更を保存が完了しました。');
+            }, 100);
+          }
+        });
       }
     });
-    
+
+    var updating = false;
+    // スクロール時の処理
+    $(document).on('scroll', function() {
+      if (updating) return;
+      var scrollHeight = $(document).height();
+      var scrollPosition = $(window).height() + $(window).scrollTop();
+      // スクロールの位置が下部1200px以下の範囲に来た場合、さらに昔の履歴を読み込む
+      if (scrollPosition + 1200 >= scrollHeight) {
+        changeUpdateFlg(true);
+        var firstRow = parseInt($('table.log tbody tr').last().find('td').first().data('id').substr(1));
+        if (firstRow > 2) {
+          google.script.run
+            .withSuccessHandler(function(result) {
+              var text = '';
+              var num = firstRow - 1;
+              for (var i in result) {
+                text += "<tr>\n";
+                for (var j in result[i]) {
+                  var alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                  text += '<td data-id="' + alpha.charAt(j) + num + '">' + nl2br(htmlspecialchars(result[i][j])) + "</td>\n";
+                }
+                num--;
+                text += "</tr>\n";
+              }
+              $('table.log tbody').append(text);
+              changeUpdateFlg(false);
+            }).withFailureHandler(function(result) {
+              changeUpdateFlg(false);
+            }).getLogDatas($('h1').attr('id') == 'dailylog' ? 'daily' : 'weekly', firstRow - 1);
+        } else {
+          changeUpdateFlg(false);
+          // 最初の行まで来た場合、最後の行ですと表示させる（仮）
+          $('.mainpanel.culture').append('<div class="append-message">最後の行です</div>');
+        }
+      }
+    });
+
+    // 読み込み中の場合、それ以外の場合でそれぞれ表示を切り替える処理
+    function changeUpdateFlg(flg) {
+      updating = flg;
+      if (flg) {
+        $('.mainpanel.culture').append('<div class="append-message">読み込み中</div>');
+      } else {
+        $('.mainpanel.culture .append-message').remove();
+      }
+    }
+
+    // 履歴の各項目をクリックした際、編集画面を表示させる
     function createEditArea(node) {
       var html = $(node).html();
-      beforeEditText = br2nl(html);
       editBlock = $(node).data('id');
+
+      if (typeof(beforeEditTextBlock[editBlock]) == 'undefined' || beforeEditTextBlock[editBlock] === null) {
+        beforeEditTextBlock[editBlock] = br2nl(html);
+      }
+
       var w = $(node).outerWidth();
       var h = $(node).outerHeight();
       $(node).html('<textarea class="edit-area">' + br2nl(html) + '</textarea>');
@@ -39,27 +115,36 @@
       });
       $(node).find('textarea.edit-area').focus();
     }
+
+    // 履歴の各項目以外をクリックした際、既に表示されている編集画面を消去する
     function deleteEditArea() {
       var text = $('.edit-area').val();
-      if (beforeEditText != text) {
-        writeSpreadSheet(text, editBlock);
+      var block = $('table.log td[data-id="' + editBlock + '"]');
+
+      if (beforeEditTextBlock[editBlock] != text) {
+        block.addClass('updated');
+      } else {
+        block.removeClass('updated');
+        beforeEditTextBlock[editBlock] = null;
       }
       $('.edit-area').parents('td').removeClass('edit');
       $('.edit-area').parents('td').html(nl2br(text));
       beforeEditText = null;
       editBlock = null;
     }
-    
+
+    // spreadsheetに記述する
     function writeSpreadSheet(str, cell) {
-      var before = beforeEditText;
+      var before = beforeEditTextBlock[cell];
       var type = $('h1').attr('id');
       google.script.run.withSuccessHandler(function(result) {
         if (!result) {
-          $('td[data-id=' + cell + ']').html(nl2br(before));
+          $('td[data-id=' + cell + ']').html(nl2br(before)).removeClass('updated');
           var col = cell.substr(0, 1);
           var row = cell.substr(1);
           var colName = $('th[data-id=' + col + ']').html();
           var rowName = $('td[data-id=A' + row + ']').html();
+          beforeEditTextBlock[cell] = before;
           alert('編集に失敗したので、' + rowName + 'の' + colName + 'の値を戻しました');
         }
       }).writeSpreadSheetLog(str, cell, type);

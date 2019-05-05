@@ -1,0 +1,59 @@
+  <script>
+  $(function() {
+    $(window).load(function() {
+      if ($(window).height() / $(window).width() < 1) {
+        $('body').css('font-size', '1.5em');
+        $('textarea.jobun').css('height', '200px');
+        $('textarea.signature').css('height', '300px');
+        $('textarea.honbun, textarea.kiroku, textarea.goal').css('height', '100px');
+        $('textarea.work-time-weekly').css('height', '170px');
+        $('.btn-group-lg>.btn, .btn-lg').css('padding', '2px 4px');
+      } else {
+        $('table.mail-contents tbody tr td').css('padding', '30px');
+        $('textarea.jobun').css('height', '500px');
+        $('textarea.signature').css('height', '600px');
+      }
+    });
+      var start = JSON.parse($('input[name="start"]').val());
+      var end = JSON.parse($('input[name="end"]').val());
+      $('.start.hour').find('option[value="' + start[0] + '"]').prop('selected', true);
+
+      $('.start.minute').find('option[value="' + start[1] + '"]').prop('selected', true);
+      $('.end.hour').find('option[value="' + end[0] + '"]').prop('selected', true);
+      $('.end.minute').find('option[value="' + end[1] + '"]').prop('selected', true);
+      $('.break-time').find('option[value="' + $('input[name="break-time"]').val() + '"]').prop('selected', true);
+
+    $(document).on('click', '#save', function() {
+      var data = {
+        name1: $('.name1').val(),
+        name2: $('.name2').val(),
+        to: $('.to').val(),
+        from: $('.from').val(),
+        cc: $('.cc').val(),
+        start: getTime('start'),
+        end: getTime('end'),
+        breakTime: $('.break-time').val(),
+        jobun: $('textarea.jobun').val(),
+        signature: $('textarea.signature').val(),
+        workSheet: $('textarea.worksheet').val(),
+      };
+      if (confirm('保存しますか？')) {
+        google.script.run.withSuccessHandler(function(result) {
+          alert('保存しました');
+        }).withFailureHandler(function(result) {
+          console.log(result);
+          alert('保存に失敗しました');
+        }).saveConfig(data);
+      }
+    });
+
+    function getTime(type) {
+      if (type == 'start') {
+        return ('0' + $('.start.hour').val()).slice(-2) + ':' + ('0' + $('.start.minute').val()).slice(-2);
+      } else if (type == 'end') {
+        return ('0' + $('.end.hour').val()).slice(-2) + ':' + ('0' + $('.end.minute').val()).slice(-2);
+      }
+      return null;
+    }
+  });
+  </script>
