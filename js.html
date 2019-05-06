@@ -2,28 +2,31 @@
   var sanbiFlg = false;
   $(function() {
     var pageType = $('.navbar-header h1').attr('id');
-    
-    if (pageType == 'daily') { 
+
+    if (pageType == 'daily') {
       $("#datepicker_1").datepicker({
         onSelect: function(date) {
           $('#ui-datepicker-div').hide();
-          google.script.run.withSuccessHandler(function(result) {
-            console.log(result);
-            $('.honbun').val(result.honbun);
-            $('.subject').val(result.subject);
-            $('.set-date .date').html(date.replace(/\//g, '-'));
-          }).getChangeDateText(date);
+          google.script.run
+            .withSuccessHandler(function(result) {
+              console.log(result);
+              $('.honbun').val(result.honbun);
+              $('.subject').val(result.subject);
+              $('.set-date .date').html(date.replace(/\//g, '-'));
+            }).withFailureHandler(function(result) {
+              alert('読み込みに失敗しました');
+            }).getChangeDateText(date);
         },
         constrainInput: true,
         showOn: 'button',
         buttonText: '日付変更'
       });
       $('.ui-datepicker-trigger').addClass('btn-lg btn btn-default');
-    
-      var start = JSON.parse($('input[name="start"]').val());    
+
+      var start = JSON.parse($('input[name="start"]').val());
       var end = JSON.parse($('input[name="end"]').val());
       $('.start.hour').find('option[value="' + start[0] + '"]').prop('selected', true);
-    
+
       $('.start.minute').find('option[value="' + start[1] + '"]').prop('selected', true);
       $('.end.hour').find('option[value="' + end[0] + '"]').prop('selected', true);
       $('.end.minute').find('option[value="' + end[1] + '"]').prop('selected', true);
@@ -33,7 +36,7 @@
         $('textarea[data-title="work-time-weekly"]').val(result);
       }).getWorkTimeWeekly();
     }
-    
+
     $(window).load(function() {
       if ($(window).height() / $(window).width() < 1) {
         $('body').css('font-size', '1.5em');
@@ -45,7 +48,7 @@
         $('table.mail-contents tbody tr td').css('padding', '30px');
       }
     });
-    
+
     $(document).on('click', '#copy', function() {
       google.script.run.withSuccessHandler(function(result) {
         //$('.to').val(result.to);
@@ -70,7 +73,8 @@
         $('textarea[data-title="other"]').val(result.other);
       }).getLastRowValues();
     });
-    
+
+    // メール送信ボタンクリック処理
     $(document).on('click', '#send', function() {
       var data = {
         to: $('.to').val(),
@@ -101,17 +105,21 @@
         data.workTimeWeekly = $('textarea[data-title="work-time-weekly"]').val();
       }
       if (confirm('メールを送信しますか？')) {
-        google.script.run.withSuccessHandler(function(result) {
-          alert('送信しました');
-        }).sendMail(data);
+        google.script.run
+          .withSuccessHandler(function(result) {
+            alert('送信しました');
+          }).withFailureHandler(function(result) {
+            alert('送信に失敗しました');
+          }).sendMail(data);
       }
     });
-     
+
+    // 消去ボタン
     $(document).on('click', '.clear', function() {
       var title = $(this).data('title');
       $('textarea[data-title="' + title + '"]').val('');
     });
-    
+
     $(document).on('click', '#normal', function() {
       google.script.run.withSuccessHandler(function(result) {
         $('.honbun').val(result);
@@ -120,7 +128,7 @@
         $('.subject').val(result);
       }).getSubject();
     });
-    
+
     function makeHonbun() {
       var body = $('.honbun').val() + "\n\n";
       if (pageType == 'daily') {
@@ -148,7 +156,7 @@
       if (!flg) return flg;
       return body;
     }
-    
+
     function getWorkTime() {
       var workTime = (parseInt($('.end.hour').val()) * 60 + parseInt($('.end.minute').val())) -
       (parseInt($('.start.hour').val()) * 60 + parseInt($('.start.minute').val())) -
@@ -157,13 +165,13 @@
     }
 
   });
-  
+
   function htmlspecialchars(str){
     return (str + '').replace(/&/g,'&amp;')
       .replace(/"/g,'&quot;')
       .replace(/'/g,'&#039;')
       .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;'); 
+      .replace(/>/g,'&gt;');
   }
 
   function nl2br(str) {
@@ -171,7 +179,7 @@
     res = res.replace(/(\n|\r)/g, "<br />");
     return res;
   }
-  
+
   function br2nl(str) {
     return str.replace(/(<br>|<br \/>|<br\/>)/g, '\n');
   };
