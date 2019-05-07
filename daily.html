@@ -22,7 +22,6 @@
       <div class="navbar-header">
         <h1 id="daily">
           <span>日報メール送信</span>
-          <button class="btn btn-default history" onclick="window.top.location.href='<?= url ?>?t=dailylog'">履歴</button>
           <button class="btn btn-default location" onclick="window.top.location.href='<?= url ?>?t=weekly'">週報</button>
         </h1>
       </div>
@@ -173,8 +172,9 @@
     </table>
     <div style="width: 80px;">&nbsp;</div>
     <table class="table">
-      <tr><td><a class="bottom-link" onclick="window.top.location.href='<?= url ?>?t=culture'">カルチャー</a></td>
-      <tr><td><a class="bottom-link" onclick="window.top.location.href='<?= url ?>?t=config'">設定</a></td>
+      <tr><td><a class="bottom-link" onclick="window.top.location.href='<?= url ?>?t=culture'">カルチャー</a></td></tr>
+      <tr><td><a class="bottom-link" onclick="window.top.location.href='<?= url ?>?t=config'">設定</a></td></tr>
+      <tr><td><a class="bottom-link" onclick="window.top.location.href='<?= url ?>?t=dailylog'">日報履歴</a></td></tr>
     </table>
   </div>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
